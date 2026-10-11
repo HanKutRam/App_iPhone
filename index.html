@@ -26,7 +26,7 @@ tr.on td{background:var(--bg);font-weight:700}
 <div id="wa"><label>Aufbereitung</label><select id="aufb"><option>gewaschen</option><option>honey</option><option>natural</option><option>anaerob</option></select></div>
 <div><label>Röstalter</label><select id="alter"><option value="frisch">bis 7 Tage</option><option value="mittel" selected>8 bis 28 Tage</option><option value="alt">über 28 Tage</option></select></div>
 <div id="wf"><label>Filterpapier</label><select id="filter"><option>Kalita</option><option>V60</option><option>Abaca</option></select></div>
-<div id="wk" hidden><label>Kreation</label><select id="kr"><option>Flat White</option><option>doppelter Espresso</option><option>Cappuccino</option></select></div></div>
+<div id="wk" hidden><label>Kreation</label><select id="kr"><option>doppelter Espresso</option><option>Cortado</option><option>Flat White</option><option>Cappuccino</option></select></div></div>
 <label>Name der Bohne (fürs Register)</label><input id="nm" placeholder="z. B. Röster, Sorte">
 <div class="r"><button id="bsave">Im Bohnenregister speichern</button><button class="s" id="nw">Neue Bohne</button></div><div class="m" id="bmsg"></div></div>
 <div class="c"><h2>Bohnenregister: <span id="rm"></span></h2><div id="reg"></div><div class="m">Pro Methode getrennt. Jede Bohne behält ihre Feedback-Anpassungen.</div></div>
@@ -41,13 +41,13 @@ tr.on td{background:var(--bg);font-weight:700}
 <div class="g" id="sp"><div><label>Kaffee (g)</label><input id="sd" type="number" step="0.5"></div><div><label>Verhältnis 1:x</label><input id="sr" type="number" step="0.1"></div>
 <div><label>Mahlgrad (Klicks, C3s Max)</label><input id="sk" type="number"></div><div><label>Temperatur (°C)</label><input id="st2" type="number"></div>
 <div><label>Bloom-Faktor</label><input id="sb" type="number" step="0.5"></div><div><label>Durchlauf min (s)</label><input id="sn" type="number"></div><div><label>Durchlauf max (s)</label><input id="sx" type="number"></div></div>
-<div class="g" id="se" hidden><div><label>Bohnenmenge (g, 17 bis 18)</label><input id="ed" type="number" step="0.5" min="17" max="18"></div><div><label>Wasser zu Kaffee 1:x</label><input id="er" type="number" step="0.1"></div>
+<div class="g" id="se" hidden><div><label>Bohnenmenge (g, 17 bis 18)</label><input id="ed" type="number" step="0.5" min="17" max="18"></div><div><label>Wassermenge Espresso (g)</label><input id="ew1" type="number"></div><div><label>Wassermenge Cortado (g)</label><input id="ew2" type="number"></div><div><label>Wassermenge Flat White (g)</label><input id="ew3" type="number"></div><div><label>Wassermenge Cappuccino (g)</label><input id="ew4" type="number"></div>
 <div><label>Mahlgrad (1 bis 60)</label><input id="eg" type="number"></div><div><label>Richtung</label><select id="edir"><option value="lo">kleinere Zahl = feiner</option><option value="hi">größere Zahl = feiner</option></select></div>
-<div><label>Bezugszeit min (s)</label><input id="et1" type="number"></div><div><label>Bezugszeit max (s)</label><input id="et2" type="number"></div><div><label>Hafermilch Flat White (ml)</label><input id="mf" type="number"></div><div><label>Hafermilch Cappuccino (ml)</label><input id="mc" type="number"></div></div>
+<div><label>Bezugszeit min (s)</label><input id="et1" type="number"></div><div><label>Bezugszeit max (s)</label><input id="et2" type="number"></div><div><label>Hafermilch Cortado (ml)</label><input id="mk" type="number"></div><div><label>Hafermilch Flat White (ml)</label><input id="mf" type="number"></div><div><label>Hafermilch Cappuccino (ml)</label><input id="mc" type="number"></div></div>
 <button class="s" id="rs">Anpassungen dieser Bohne zurücksetzen</button></details>
 <p class="m">Hinweis: Die Regeln sind plausible Startannahmen, keine Messwerte. Bei der Extraktion wird pro Versuch nur ein Parameter geändert, die Milchmenge separat.</p>
 </main><script>
-const $=s=>document.querySelector(s),DS={dose:15,ratio:16.7,klicks:20,temp:94,bloom:3,tmin:165,tmax:195},DE={dose:18,ratio:2,grind:12,tmin:25,tmax:30,fine:'lo',mfw:120,mcp:100},Z=()=>({k:0,t:0,r:0,g:0,d:null,w:null,m:null,v:null});
+const $=s=>document.querySelector(s),DS={dose:15,ratio:16.7,klicks:20,temp:94,bloom:3,tmin:165,tmax:195},DE={dose:18,ratio:2,grind:12,tmin:25,tmax:30,fine:'lo',wes:36,wco:36,wfw:36,wcp:36,mlco:50,mlfw:110,mlcp:150},Z=()=>({k:0,t:0,r:0,g:0,d:null,w:null,m:null,v:null});
 let S={...DS},E={...DE},B=[],M='po',cur={id:null,adj:Z()},P=null,SM=null,iv=null,t0=0;
 try{const x=JSON.parse(localStorage.getItem('kr2')||localStorage.getItem('kr')||'null');if(x){S={...S,...x.S};E={...E,...x.E};B=x.B||[];M=x.M||'po'}}catch(e){}
 const sv=()=>{try{localStorage.setItem('kr2',JSON.stringify({S,E,B,M}))}catch(e){}};
@@ -55,7 +55,7 @@ const ps=()=>{const b=B.find(x=>x.id==cur.id);if(b)b.adj={...cur.adj};sv()};
 const mm=s=>Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0');
 function bind(l,o){l.forEach(([i,k])=>{$('#'+i).value=o[k];$('#'+i).onchange=e=>{const v=parseFloat(e.target.value);if(v>0){o[k]=v;sv();draw()}}})}
 bind([['sd','dose'],['sr','ratio'],['sk','klicks'],['st2','temp'],['sb','bloom'],['sn','tmin'],['sx','tmax']],S);
-bind([['ed','dose'],['er','ratio'],['eg','grind'],['et1','tmin'],['et2','tmax'],['mf','mfw'],['mc','mcp']],E);
+bind([['ed','dose'],['ew1','wes'],['ew2','wco'],['ew3','wfw'],['ew4','wcp'],['eg','grind'],['et1','tmin'],['et2','tmax'],['mk','mlco'],['mf','mlfw'],['mc','mlcp']],E);
 $('#edir').value=E.fine;$('#edir').onchange=e=>{E.fine=e.target.value;sv();draw()};
 ['roest','aufb','alter','filter','kr'].forEach(i=>$('#'+i).onchange=draw);
 $('#rs').onclick=()=>{cur.adj=Z();ps();draw()};
@@ -86,14 +86,14 @@ if(j.k||j.t||j.r)y.push('Aus Feedback: '+[j.k&&j.k+' Klicks',j.t&&j.t+' °C',j.r
 const wa=Math.round(S.dose*ra),bl=Math.round(S.dose*bf),g1=Math.round(wa*.6/5)*5;
 return{k,t,ra,wa,bl,g1,w,f,y,ph:[[0,bl,'Bloom, kreisend'],[w,g1,'1. Guss'],[w+45,wa,'2. Guss']]}}
 function calcE(){const r=$('#roest').value,al=$('#alter').value,kr=$('#kr').value,j=cur.adj,sg=E.fine=='lo'?-1:1,y=[];
-let g=E.grind+j.g,ra=E.ratio;
+let g=E.grind+j.g;
 if(r=='hell'){g+=sg;y.push('Hell: 1 Schritt feiner')}
 if(r=='dunkel'){g-=sg;y.push('Dunkel: 1 Schritt gröber')}
 if(al=='frisch'){g-=sg;y.push('Frisch geröstet: 1 Schritt gröber (Annahme)')}
-if(kr=='Flat White'){ra-=.2;y.push('Flat White: konzentrierterer Shot, 0,2 g Wasser pro g Kaffee weniger (Annahme)')}
-const dose=j.d||E.dose,wm=j.w!=null?j.w:Math.round(dose*ra);
-let ml=kr=='Flat White'?E.mfw:kr=='Cappuccino'?E.mcp:0;
-if(ml){if(j.m!=null)ml=j.m;else y.push('Hafermilch: Startwert aus den Einstellungen (Annahme), pro Bohne und Milch über das Feedback anpassen')}
+
+const dose=j.d||E.dose,wb={'doppelter Espresso':E.wes,Cortado:E.wco,'Flat White':E.wfw,Cappuccino:E.wcp}[kr],wm=j.w!=null?j.w:wb;
+let ml={Cortado:E.mlco,'Flat White':E.mlfw,Cappuccino:E.mlcp}[kr]||0;
+if(ml){if(j.m!=null)ml=j.m;else y.push('Wasser und Hafermilch: Startwerte für '+kr+' aus deinen Einstellungen, pro Bohne und Milch über das Feedback anpassen')}
 if(j.g||j.w!=null||j.d||j.m!=null)y.push('Aus Feedback: '+[j.g&&'Mahlgrad '+(j.g>0?'+':'')+j.g,j.w!=null&&'Wasser '+j.w+' g',j.d&&'Menge '+j.d+' g',j.m!=null&&ml&&'Milch '+j.m+' ml'].filter(Boolean).join(', '));
 g=Math.min(60,Math.max(1,Math.round(g)));
 return{g,dose,wm,ml,v:j.v,ra:wm/dose,y,sg,kr}}
@@ -148,7 +148,7 @@ const bm=parseFloat($('#bm').value),ay=parseFloat($('#ay').value),ml=parseFloat(
 if(d.w==null&&aw>0&&aw!=P.wm){d.w=aw;txt+=' Wassermenge '+aw+' g wird als neue Basis übernommen.'}
 if(bm>0&&bm!=P.dose){d.d=bm;txt+=' Bohnenmenge '+bm+' g wird als neue Basis übernommen.'}
 if(ay>0){d.v=Math.round((w0-ay)*10)/10;txt+=' Kontrolle: Auslauf '+ay+' g (1:'+(ay/(bm>0?bm:P.dose)).toFixed(1)+'), Verlust '+d.v+' g.'}
-if(P.ml){const m0=ml>0?ml:P.ml;if(mb=='schwach'){d.m=m0-10;txt+=' Hafermilch: 10 ml weniger ('+d.m+' ml).'}else if(mb=='dominant'){d.m=m0+10;txt+=' Hafermilch: 10 ml mehr ('+d.m+' ml).'}else if(ml>0&&ml!=P.ml){d.m=ml;txt+=' Hafermilch '+ml+' ml wird als neue Basis übernommen.'}}}
+if(P.ml){const m0=ml>0?ml:P.ml,st=Math.max(5,Math.round(m0*.1/5)*5);if(mb=='schwach'){d.m=m0-st;txt+=' Hafermilch: '+st+' ml weniger ('+d.m+' ml).'}else if(mb=='dominant'){d.m=m0+st;txt+=' Hafermilch: '+st+' ml mehr ('+d.m+' ml).'}else if(ml>0&&ml!=P.ml){d.m=ml;txt+=' Hafermilch '+ml+' ml wird als neue Basis übernommen.'}}}
 const any=d.k||d.t||d.r||d.g||d.d||d.w!=null||d.m!=null||d.v!=null;
 $('#rec').innerHTML=`<p><b>${txt}</b></p>`+(any?'<button id="ap">Für nächsten Versuch übernehmen</button>':'');
 const ap=$('#ap');if(ap)ap.onclick=()=>{const j=cur.adj;j.k+=d.k;j.t+=d.t;j.r=Math.round((j.r+d.r)*10)/10;j.g+=d.g;if(d.d)j.d=d.d;if(d.w!=null)j.w=d.w;if(d.m!=null)j.m=d.m;if(d.v!=null)j.v=d.v;ps();['dz','ay','aw','ml','bm'].forEach(i=>$('#'+i).value='');$('#mb').value='ok';$('#rec').innerHTML='<p class="m">Übernommen. Neues Startrezept oben.</p>';draw();scrollTo(0,0)}};
